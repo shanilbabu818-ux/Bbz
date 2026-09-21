@@ -1,0 +1,54 @@
+services:
+  - type: web
+    name: foxiby-api
+    runtime: node
+    rootDir: .
+    buildCommand: pnpm install --no-frozen-lockfile && pnpm --filter @foxiby/database build && pnpm --filter @foxiby/api build
+    startCommand: pnpm --filter @foxiby/api start
+    healthCheckPath: /v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foxiby-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: foxiby-redis
+          type: redis
+          property: connectionString
+
+  - type: worker
+    name: foxiby-worker
+    runtime: node
+    rootDir: .
+    buildCommand: pnpm install --no-frozen-lockfile
+    startCommand: echo "Worker placeholder: add BullMQ worker entrypoint before enabling production jobs"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foxiby-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: foxiby-redis
+          type: redis
+          property: connectionString
+
+  - type: static
+    name: foxiby-storefront
+    rootDir: frontend
+    buildCommand: echo "Static storefront ready"
+    staticPublishPath: .
+
+  - type: redis
+    name: foxiby-redis
+    plan: free
+    ipAllowList: []
+
+databases:
+  - name: foxiby-postgres
+    plan: free
