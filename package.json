@@ -1,0 +1,14 @@
+{
+  "name": "foxiby",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:api": "pnpm --filter @foxiby/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @foxiby/database db:generate",
+    "db:migrate": "pnpm --filter @foxiby/database db:migrate"
+  }
+}
