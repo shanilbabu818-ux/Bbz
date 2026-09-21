@@ -1,5 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
+import { CatalogService } from './catalog.service';
 
 class ProductQueryDto {
   @IsOptional()
@@ -13,12 +14,18 @@ class ProductQueryDto {
 
 @Controller('products')
 export class CatalogController {
+  constructor(private readonly catalog: CatalogService) {}
+
   @Get()
   list(@Query() query: ProductQueryDto) {
-    return {
-      data: [],
-      meta: { page: 1, limit: 24, total: 0 },
-      filters: query,
-    };
+    const data = this.catalog.list(query.search, query.category);
+    return { data, meta: { page: 1, limit: data.length, total: data.length }, filters: query };
+  }
+
+  @Get(':slug')
+  get(@Param('slug') slug: string) {
+    const product = this.catalog.findBySlug(slug);
+    if (!product) throw new NotFoundException('Product not found');
+    return { data: product };
   }
 }
