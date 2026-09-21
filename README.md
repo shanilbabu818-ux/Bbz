@@ -7,7 +7,9 @@ Initial API foundation for foxiby, a custom dropshipping platform.
 - NestJS API using Fastify
 - Global validation and `/v1` API prefix
 - Health endpoint at `GET /v1/health`
-- Catalog endpoint at `GET /v1/products`
+- Product listing at `GET /v1/products`
+- Product details at `GET /v1/products/:slug`
+- In-memory cart at `GET /v1/cart` and `POST /v1/cart/items`
 - Supplier adapter contract for CJdropshipping integration
 - PostgreSQL and Redis Docker services
 - Environment variable template
@@ -16,14 +18,9 @@ Initial API foundation for foxiby, a custom dropshipping platform.
 
 ```bash
 cp .env.example .env
+docker compose up -d
 pnpm install
 pnpm dev:api
 ```
 
-Start infrastructure with:
-
-```bash
-docker compose up -d
-```
-
-This branch is a foundation. Database migrations, authentication, carts, checkout, payments, fulfillment workers, and the CJdropshipping implementation are planned for the next increments.
+The current product and cart stores are intentionally in-memory for development. PostgreSQL persistence, authentication, checkout, payments, fulfillment, and workers are the next production modules.
