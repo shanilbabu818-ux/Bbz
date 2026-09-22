@@ -24,7 +24,7 @@ services:
     runtime: node
     rootDir: .
     buildCommand: pnpm install --no-frozen-lockfile
-    startCommand: echo "Worker placeholder: add BullMQ worker entrypoint before enabling production jobs"
+    startCommand: node -e "console.log('foxiby worker placeholder')"
     envVars:
       - key: NODE_ENV
         value: production
