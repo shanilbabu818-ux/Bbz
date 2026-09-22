@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { prisma } from '@foxiby/database';
 import { ShopifyApiError, ShopifyHttpAdapter } from './shopify.adapter';
 
-const RETRY_DELAYS_MS = [60_000, 5 * 60_000, 30 * 60 * 60_000, 2 * 60 * 60_000];
+const RETRY_DELAYS_MS = [60_000, 5 * 60_000, 30 * 60_000, 2 * 60 * 60_000];
 
 @Injectable()
 export class ShopifyPublishingService {
