@@ -38,7 +38,7 @@ services:
           type: redis
           property: connectionString
 
-  - type: static_site
+  - type: static
     name: foxiby-storefront
     rootDir: frontend
     buildCommand: echo "Static storefront ready"
