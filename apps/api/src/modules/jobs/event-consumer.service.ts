@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job, Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
@@ -47,7 +47,9 @@ export class EventConsumerService implements OnModuleDestroy {
       } else if (job.name === PRODUCT_PUBLISHED) {
         const payload = this.parseProductPayload(job.data) as ProductWorkflowPayload;
         await this.shopify.publishApprovedProduct(payload.productId, payload.organizationId, payload.publishedBy);
-      } else if (job.name !== PRODUCT_PUBLISH_APPROVED) {
+      } else if (job.name === PRODUCT_PUBLISH_APPROVED) {
+        this.parseProductPayload(job.data);
+      } else {
         throw new Error(`Unsupported event type: ${job.name}`);
       }
       await this.completeExecution(execution.id, { handled: true });
