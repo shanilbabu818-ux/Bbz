@@ -28,21 +28,27 @@ enum OrganizationRole {
   STAFF
 }
 
+enum JobExecutionStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 model User {
-  id           String                 @id @default(cuid())
-  email        String                 @unique
+  id           String                   @id @default(cuid())
+  email        String                   @unique
   passwordHash String
   name         String?
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
   memberships  OrganizationMembership[]
 }
 
 model Organization {
-  id           String                 @id @default(cuid())
+  id           String                   @id @default(cuid())
   name         String
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
   products     Product[]
   outboxEvents OutboxEvent[]
   auditLogs    AuditLog[]
@@ -110,7 +116,22 @@ model AuditLog {
   entityId       String
   metadata       Json?
   createdAt      DateTime     @default(now())
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, createdAt])
+}
+
+model JobExecution {
+  id             String             @id @default(cuid())
+  jobId          String             @unique
+  eventType      String
+  status         JobExecutionStatus @default(PROCESSING)
+  attempts       Int                @default(1)
+  result         Json?
+  lastError      String?
+  startedAt      DateTime           @default(now())
+  completedAt    DateTime?
+  updatedAt      DateTime           @updatedAt
+
+  @@index([eventType, status])
 }
