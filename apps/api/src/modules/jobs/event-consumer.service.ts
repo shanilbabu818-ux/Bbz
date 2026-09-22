@@ -4,6 +4,7 @@ import { Job, Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { prisma } from '@foxiby/database';
 import { AiScoringService } from './ai-scoring.service';
+import { ShopifyPublishingService } from '../shopify/shopify-publishing.service';
 import {
   FOXIBY_EVENTS_QUEUE,
   PRODUCT_AI_SCORING_REQUESTED,
@@ -23,7 +24,11 @@ export class EventConsumerService implements OnModuleDestroy {
   private readonly eventWorker: Worker;
   private readonly scoringWorker: Worker;
 
-  constructor(private readonly config: ConfigService, private readonly aiScoring: AiScoringService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly aiScoring: AiScoringService,
+    private readonly shopify: ShopifyPublishingService,
+  ) {
     const redisUrl = this.config.get<string>('REDIS_URL', 'redis://localhost:6379');
     const concurrency = Number(this.config.get('WORKER_CONCURRENCY', 5));
     this.connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
@@ -40,7 +45,8 @@ export class EventConsumerService implements OnModuleDestroy {
         const payload = this.parseProductPayload(job.data);
         await this.scoringQueue.add(PRODUCT_AI_SCORING_REQUESTED, payload, { jobId: `score:${payload.productId}`, removeOnComplete: 1000, removeOnFail: 5000 });
       } else if (job.name === PRODUCT_PUBLISH_APPROVED) {
-        this.parseProductPayload(job.data);
+        const payload = this.parseProductPayload(job.data) as ProductWorkflowPayload;
+        await this.shopify.publishApprovedProduct(payload.productId, payload.organizationId, payload.approvedBy);
       } else if (job.name !== PRODUCT_PUBLISHED) {
         throw new Error(`Unsupported event type: ${job.name}`);
       }
