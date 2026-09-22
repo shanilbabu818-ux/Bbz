@@ -5,11 +5,6 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    HealthModule,
-    CatalogModule,
-    SuppliersModule,
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), HealthModule, CatalogModule, SuppliersModule],
 })
 export class AppModule {}
