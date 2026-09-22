@@ -1,15 +1,13 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { prisma } from '@foxiby/database';
 import { ShopifyHttpAdapter } from './shopify.adapter';
 
 @Injectable()
-export class ShopifyPublishingService implements OnModuleDestroy {
+export class ShopifyPublishingService {
   private readonly adapter: ShopifyHttpAdapter;
-  private readonly config: ConfigService;
 
   constructor(config: ConfigService) {
-    this.config = config;
     this.adapter = new ShopifyHttpAdapter(config);
   }
 
