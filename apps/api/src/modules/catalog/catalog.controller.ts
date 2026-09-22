@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Post, Query, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Query, UnauthorizedException } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
 import { AuthService } from '../auth/auth.service';
 import { CreateProductDto } from './create-product.dto';
@@ -34,5 +34,17 @@ export class CatalogController {
   async create(@Headers('authorization') authorization: string | undefined, @Body() input: CreateProductDto) {
     const auth = this.getAuth(authorization);
     return { data: await this.catalogService.create(auth.organizationId, input) };
+  }
+
+  @Post(':productId/approve')
+  async approve(@Headers('authorization') authorization: string | undefined, @Param('productId') productId: string) {
+    const auth = this.getAuth(authorization);
+    return { data: await this.catalogService.approve(auth.organizationId, productId, auth) };
+  }
+
+  @Post(':productId/publish')
+  async publish(@Headers('authorization') authorization: string | undefined, @Param('productId') productId: string) {
+    const auth = this.getAuth(authorization);
+    return { data: await this.catalogService.publish(auth.organizationId, productId, auth) };
   }
 }
