@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Query, UnauthorizedException } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
 import { CatalogService } from './catalog.service';
 import { CreateProductDto } from './create-product.dto';
@@ -19,13 +19,14 @@ export class CatalogController {
 
   @Get()
   async list(@Headers('x-organization-id') organizationId: string | undefined, @Query() query: ProductQueryDto) {
-    const data = organizationId ? await this.catalogService.list(organizationId, query.category, query.search) : [];
+    if (!organizationId) throw new UnauthorizedException('Organization context is required');
+    const data = await this.catalogService.list(organizationId, query.category, query.search);
     return { data, meta: { page: 1, limit: 24, total: data.length }, filters: query };
   }
 
   @Post()
   async create(@Headers('x-organization-id') organizationId: string | undefined, @Body() input: CreateProductDto) {
-    if (!organizationId) return { error: 'ORGANIZATION_REQUIRED' };
+    if (!organizationId) throw new UnauthorizedException('Organization context is required');
     return { data: await this.catalogService.create(organizationId, input) };
   }
 }
