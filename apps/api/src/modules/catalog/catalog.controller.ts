@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Headers, Post, Query, UnauthorizedException } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
-import { CatalogService } from './catalog.service';
+import { AuthService } from '../auth/auth.service';
 import { CreateProductDto } from './create-product.dto';
+import { CatalogService } from './catalog.service';
 
 class ProductQueryDto {
   @IsOptional()
@@ -15,18 +16,23 @@ class ProductQueryDto {
 
 @Controller('products')
 export class CatalogController {
-  constructor(private readonly catalogService: CatalogService) {}
+  constructor(private readonly catalogService: CatalogService, private readonly authService: AuthService) {}
+
+  private getAuth(authorization: string | undefined) {
+    if (!authorization?.startsWith('Bearer ')) throw new UnauthorizedException('Bearer token is required');
+    return this.authService.verifyToken(authorization.slice(7));
+  }
 
   @Get()
-  async list(@Headers('x-organization-id') organizationId: string | undefined, @Query() query: ProductQueryDto) {
-    if (!organizationId) throw new UnauthorizedException('Organization context is required');
-    const data = await this.catalogService.list(organizationId, query.category, query.search);
+  async list(@Headers('authorization') authorization: string | undefined, @Query() query: ProductQueryDto) {
+    const auth = this.getAuth(authorization);
+    const data = await this.catalogService.list(auth.organizationId, query.category, query.search);
     return { data, meta: { page: 1, limit: 24, total: data.length }, filters: query };
   }
 
   @Post()
-  async create(@Headers('x-organization-id') organizationId: string | undefined, @Body() input: CreateProductDto) {
-    if (!organizationId) throw new UnauthorizedException('Organization context is required');
-    return { data: await this.catalogService.create(organizationId, input) };
+  async create(@Headers('authorization') authorization: string | undefined, @Body() input: CreateProductDto) {
+    const auth = this.getAuth(authorization);
+    return { data: await this.catalogService.create(auth.organizationId, input) };
   }
 }
