@@ -35,6 +35,7 @@ services:
       - key: REDIS_URL
         fromService:
           name: foxiby-redis
+          type: keyvalue
           property: connectionString
 
   - type: web
