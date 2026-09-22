@@ -8,14 +8,13 @@ const RETRY_DELAYS_MS = [60_000, 5 * 60_000, 30 * 60_000, 2 * 60 * 60_000];
 @Injectable()
 export class ShopifyPublishingService {
   private readonly adapter: ShopifyHttpAdapter;
-  constructor(private readonly config: ConfigService) { this.adapter = new ShopifyHttpAdapter(config); }
+  constructor(config: ConfigService) { this.adapter = new ShopifyHttpAdapter(config); }
 
   async publishApprovedProduct(productId: string, organizationId: string, actorUserId?: string) {
     const product = await prisma.product.findFirst({ where: { id: productId, organizationId } });
     if (!product) throw new Error('Product not found');
     if (product.status !== 'APPROVED' && product.shopifyPublicationStatus !== 'RETRY_WAIT') throw new Error('Only approved products can be published to Shopify');
     if (product.shopifyProductId) return { externalProductId: product.shopifyProductId, alreadyPublished: true };
-
     await prisma.product.update({ where: { id: product.id }, data: { shopifyPublicationStatus: 'PUBLISHING', shopifyLastError: null, shopifyPublishAttempts: { increment: 1 } } });
     const idempotencyKey = `shopify-product:${organizationId}:${product.id}`;
     try {
@@ -54,11 +53,18 @@ export class ShopifyPublishingService {
   }
 
   async reconcileDueProducts(limit = 50) {
-    const due = await prisma.product.findMany({ where: { shopifyPublicationStatus: { in: ['RETRY_WAIT', 'PUBLISHED'] }, OR: [{ shopifyNextRetryAt: { lte: new Date() } }, { shopifyLastCheckedAt: null }, { shopifyLastCheckedAt: { lte: new Date(Date.now() - 60 * 60_000) } }] }, take: limit });
+    const now = new Date();
+    const due = await prisma.product.findMany({ where: { shopifyPublicationStatus: { in: ['RETRY_WAIT', 'PUBLISHED'] }, OR: [{ shopifyNextRetryAt: { lte: now } }, { shopifyLastCheckedAt: null }, { shopifyLastCheckedAt: { lte: new Date(Date.now() - 60 * 60_000) } }] }, take: limit });
+    let processed = 0;
     for (const product of due) {
-      if (product.shopifyPublicationStatus === 'RETRY_WAIT') await this.publishApprovedProduct(product.id, product.organizationId);
-      else await this.reconcileProduct(product.id, product.organizationId);
+      try {
+        if (product.shopifyPublicationStatus === 'RETRY_WAIT') await this.publishApprovedProduct(product.id, product.organizationId);
+        else await this.reconcileProduct(product.id, product.organizationId);
+        processed += 1;
+      } catch (error) {
+        console.error(`Shopify reconciliation failed for ${product.id}`, error);
+      }
     }
-    return due.length;
+    return processed;
   }
 }
