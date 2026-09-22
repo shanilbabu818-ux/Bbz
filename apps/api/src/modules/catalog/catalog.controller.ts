@@ -1,5 +1,7 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
+import { CatalogService } from './catalog.service';
+import { CreateProductDto } from './create-product.dto';
 
 class ProductQueryDto {
   @IsOptional()
@@ -13,12 +15,17 @@ class ProductQueryDto {
 
 @Controller('products')
 export class CatalogController {
+  constructor(private readonly catalogService: CatalogService) {}
+
   @Get()
-  list(@Query() query: ProductQueryDto) {
-    return {
-      data: [],
-      meta: { page: 1, limit: 24, total: 0 },
-      filters: query,
-    };
+  async list(@Headers('x-organization-id') organizationId: string | undefined, @Query() query: ProductQueryDto) {
+    const data = organizationId ? await this.catalogService.list(organizationId, query.category, query.search) : [];
+    return { data, meta: { page: 1, limit: 24, total: data.length }, filters: query };
+  }
+
+  @Post()
+  async create(@Headers('x-organization-id') organizationId: string | undefined, @Body() input: CreateProductDto) {
+    if (!organizationId) return { error: 'ORGANIZATION_REQUIRED' };
+    return { data: await this.catalogService.create(organizationId, input) };
   }
 }
