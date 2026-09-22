@@ -16,7 +16,7 @@ services:
       - key: REDIS_URL
         fromService:
           name: foxiby-redis
-          type: redis
+          type: keyvalue
           property: connectionString
 
   - type: worker
@@ -35,16 +35,16 @@ services:
       - key: REDIS_URL
         fromService:
           name: foxiby-redis
-          type: redis
           property: connectionString
 
-  - type: static
+  - type: web
     name: foxiby-storefront
+    runtime: static
     rootDir: frontend
     buildCommand: echo "Static storefront ready"
     staticPublishPath: .
 
-  - type: redis
+  - type: keyvalue
     name: foxiby-redis
     plan: free
     ipAllowList: []
